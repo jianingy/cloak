@@ -15,7 +15,7 @@ import (
 type (
     ResourceHandler func (*RequestContext) (interface{}, *ResponseError)
     Resource struct {}
-    ResourceInterface interface {
+    ResourceAction interface {
         List(*RequestContext)   (interface{}, *ResponseError)
         Create(*RequestContext) (interface{}, *ResponseError)
         Show(*RequestContext)   (interface{}, *ResponseError)
@@ -38,20 +38,12 @@ func NewResourceHandler(model interface{}, app ResourceHandler, mgr *ResourceMan
         /* Start a request Life-Cycle */
 
         /* Create a new RequestContext per each request */
-        context := NewRequestContext(w, r, t)
-
-        for _, extension := range mgr.extensions {
-            extension.OnSessionBegin(context)
-        }
+        context := NewRequestContext(w, r, t, mgr)
 
         /* call application */
         resp, err := app(context)
         if err != nil {
             panic(err)
-        }
-
-        for _, extension := range mgr.extensions {
-            extension.OnSessionEnd(context)
         }
 
         /* generate response */
@@ -64,6 +56,10 @@ func NewResourceHandler(model interface{}, app ResourceHandler, mgr *ResourceMan
 
         /* Request ends here */
     }
+}
+
+func (*Resource) Instance(context *RequestContext) interface{} {
+    return context.Get("decoder.instance")
 }
 
 func (*Resource) List(context *RequestContext) (interface{}, *ResponseError) {

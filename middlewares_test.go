@@ -52,7 +52,7 @@ func TestJSONDeserializeMiddlewareWithNormalJSONPUT(t *testing.T) {
     json := `{"code":200, "status":"ok"}`
     _, _, c := makeNewRequest(t, "PUT", "http://bar/foo", json, &myType{})
     f := func(ctx *RequestContext) (interface{}, *ResponseError) {
-        instance := ctx.Instance().(*myType)
+        instance := ctx.Get("decoder.instance").(*myType)
         if instance.Code != 200 || instance.Status != "ok" {
             t.Fatalf("JSON Deserialization failed. got %v, %v expected 200, ok",
                 instance.Code, instance.Status)
@@ -69,7 +69,7 @@ func TestJSONDeserializeMiddlewareWithNormalJSONPOST(t *testing.T) {
     json := `{"code":200, "status":"ok"}`
     _, _, c := makeNewRequest(t, "POST", "http://bar/foo", json, &myType{})
     f := func(ctx *RequestContext) (interface{}, *ResponseError) {
-        instance := ctx.Instance().(*myType)
+        instance := ctx.Get("decoder.instance").(*myType)
         if instance.Code != 200 || instance.Status != "ok" {
             t.Fatalf("JSON Deserialization failed. got %v, %v expected 200, ok",
                 instance.Code, instance.Status)

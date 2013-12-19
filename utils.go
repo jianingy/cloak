@@ -13,3 +13,7 @@ func getTypeName(f interface{}) string {
 func createInstanceByType(t reflect.Type) interface{} {
     return reflect.New(t).Interface()
 }
+
+func createSliceByType(t reflect.Type) interface{} {
+    return reflect.New(reflect.Type(reflect.SliceOf(t))).Interface()
+}

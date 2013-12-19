@@ -5,10 +5,3 @@
  */
 
 package cloak
-
-type Extension interface {
-    OnAddResource(interface{})
-    OnBind(map[string]interface{})
-    OnSessionBegin(*RequestContext)
-    OnSessionEnd(*RequestContext)
-}

@@ -22,8 +22,9 @@ func TestNewRequestContext(t *testing.T) {
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
+    mgr := NewResourceManager([]Middleware{})
 	w := httptest.NewRecorder()
-    c := NewRequestContext(w, r, model)
+    c := NewRequestContext(w, r, model, mgr)
     if string(c.body) != body || c.req != r ||
         c.resp != w || c.model != model ||
         c.session != nil || c.instance !=nil {
@@ -34,61 +35,26 @@ func TestNewRequestContext(t *testing.T) {
 func TestSetGet(t *testing.T) {
     _, _, c := makeNewRequest(t, "GET", "http://bar/foo", "", &myType{})
     c.Set("dummy", "1234")
-    ret, found := c.Get("dummy")
-    if found && ret != "1234"{
+    ret := c.Get("dummy")
+    if  ret != "1234"{
         t.Fatalf("Set/Get failed: incorrect value")
-    } else if found == false {
-        t.Fatalf("Set/Get failed: value not found")
+    }
+}
+
+func TestSetGetDefaultValue(t *testing.T) {
+    _, _, c := makeNewRequest(t, "GET", "http://bar/foo", "", &myType{})
+    ret := c.Get("dummy", "1234")
+    if  ret != "1234"{
+        t.Fatalf("Get failed with default value")
     }
 }
 
 func TestGetNotExists(t *testing.T) {
     _, _, c := makeNewRequest(t, "GET", "http://bar/foo", "", &myType{})
-    _, found := c.Get("dummy")
-    if found {
-        t.Fatalf("Get failed: value should not exists.")
-    }
-}
-
-func TestGetBindInstance(t *testing.T) {
-    _, _, c := makeNewRequest(t, "GET", "http://bar/foo", "", &myType{})
-    c.BindInstance(&myType{Code:1234, Status: "ok"})
-    instance := c.Instance().(*myType)
-    if instance.Code != 1234 || instance.Status != "ok" {
-        t.Fatalf("Get instance failed: got %v, %v expected 1234, ok.",
-            instance.Code, instance.Status)
-    }
-}
-
-func TestGetInstanceUnbind(t *testing.T) {
-    _, _, c := makeNewRequest(t, "GET", "http://bar/foo", "", &myType{})
     defer func() {
-        if r := recover(); r != nil {
-            /* ok, we got error */
-        } else {
-            /* not ok */
-            t.Fatalf("Unbind instance should not raise error.")
+        if r := recover(); r == nil {
+            t.Fatalf("Get failed: error should be raised when value not exist.")
         }
     }()
-    _ = c.Instance()
-}
-
-func TestGetBindSession(t *testing.T) {
-    _, _, c := makeNewRequest(t, "GET", "http://bar/foo", "", &myType{})
-    c.BindSession(&mySession{})
-    _ = c.Session()
-}
-
-func TestGetSessionUnbind(t *testing.T) {
-    _, _, c := makeNewRequest(t, "GET", "http://bar/foo", "", &myType{})
-
-    defer func() {
-        if r := recover(); r != nil {
-            /* ok, we got error */
-        } else {
-            /* not ok */
-            t.Fatalf("Unbind session error didn't be generated.")
-        }
-    }()
-    _ = c.Session()
+    _ = c.Get("dummy")
 }

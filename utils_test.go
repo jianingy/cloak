@@ -26,8 +26,9 @@ func makeNewRequest(t *testing.T, method, url, body string, model interface{}) (
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
+    mgr := NewResourceManager([]Middleware{})
 	w := httptest.NewRecorder()
-    c := NewRequestContext(w, r, reflect.Indirect(reflect.ValueOf(model)).Type())
+    c := NewRequestContext(w, r, reflect.Indirect(reflect.ValueOf(model)).Type(), mgr)
     return w, r, c
 }
 

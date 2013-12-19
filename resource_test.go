@@ -15,7 +15,7 @@ import (
 
 func TestNewResourceHandler(t *testing.T) {
     expected := "hello, world"
-    mgr := NewResourceManager([]Middleware{}, []Extension{})
+    mgr := NewResourceManager([]Middleware{})
     h := func (context *RequestContext) (interface{}, *ResponseError) {
         return expected, nil
     }
@@ -33,7 +33,7 @@ func TestNewResourceHandler(t *testing.T) {
 
 func TestNewResourceHandlerWithError(t *testing.T) {
     expected := "some error"
-    mgr := NewResourceManager([]Middleware{}, []Extension{})
+    mgr := NewResourceManager([]Middleware{})
     h := func (context *RequestContext) (interface{}, *ResponseError) {
         return "", NewResponseError(http.StatusBadRequest, expected)
     }

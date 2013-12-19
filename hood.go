@@ -7,50 +7,36 @@
 package cloak
 
 import (
-    "log"
+    _ "log"
     "reflect"
     "net/http"
     "github.com/eaigner/hood"
 )
 
 type (
-    HoodExtension struct {
-        hd *hood.Hood
-        context *RequestContext
-    }
-
-    HoodSessionT interface {
-        Add(interface {})
-        Delete(interface{})
-    }
-
     HoodSession struct {
         hd *hood.Hood
         tx *hood.Hood
     }
-
-    HoodResource struct {}
+    HoodResource struct {
+        Resource
+    }
 )
 
-func (ext *HoodExtension) OnAddResource(model interface{}) {
-}
-
-func (ext *HoodExtension) OnBind(opts map[string]interface{}) {
-    if hd, found := opts["exts.hood"]; found {
-        ext.hd = hd.(*hood.Hood)
-        log.Printf("Bind Hood instance: %v\n", ext.hd)
+func HoodSessionMiddleware(resh ResourceHandler) ResourceHandler {
+    return func (context *RequestContext) (interface{}, *ResponseError) {
+        hd := context.mgr.Option("hood.hd")
+        session := NewHoodSession(hd)
+        context.Set("hood.session", session)
+        session.Begin()
+        resp, err := resh(context)
+        session.Commit()
+        return resp, err
     }
 }
 
-func (ext *HoodExtension) OnSessionBegin(context *RequestContext) {
-    context.BindSession(NewHoodSession(ext.hd))
-}
-
-func (ext *HoodExtension) OnSessionEnd(context *RequestContext) {
-}
-
-func NewHoodSession(hd *hood.Hood) *HoodSession {
-    return &HoodSession{hd:hd, tx: nil}
+func NewHoodSession(hd interface{}) *HoodSession {
+    return &HoodSession{hd: hd.(*hood.Hood)}
 }
 
 func (session *HoodSession) Begin() {
@@ -63,6 +49,10 @@ func (session *HoodSession) Commit() {
 
 func (session *HoodSession) Rollback() {
     session.tx.Rollback()
+}
+
+func (session *HoodSession) Transaction() *hood.Hood {
+    return session.tx
 }
 
 func (session *HoodSession) Add(instance interface{}) {
@@ -81,16 +71,21 @@ func (session *HoodSession) Delete(instance interface{}) {
     }
 }
 
-
-
-func (*HoodResource) List(context *RequestContext) (interface{}, *ResponseError) {
-    return nil, NewResponseError(http.StatusNotImplemented,"Not Implement")
+func (*HoodResource) Session(context *RequestContext) (*HoodSession) {
+    return context.Get("hood.session").(*HoodSession)
 }
 
-func (*HoodResource) Create(context *RequestContext) (interface{}, *ResponseError) {
-    session := context.Session().(HoodSessionT)
-    session.Add(context.Instance())
-    return context.Instance(), nil
+func (h *HoodResource) List(context *RequestContext) (interface{}, *ResponseError) {
+    session := h.Session(context)
+    result := createInstanceByType(context.ModelType())
+    session.Transaction().Find(result)
+    return result, nil
+}
+
+func (h *HoodResource) Create(context *RequestContext) (interface{}, *ResponseError) {
+    instance := h.Instance(context)
+    h.Session(context).Add(instance)
+    return instance, nil
 }
 
 func (self *HoodResource) Show(context *RequestContext) (interface{}, *ResponseError) {

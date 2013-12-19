@@ -39,7 +39,7 @@ func JSONDeserializeMiddleware(resh ResourceHandler) ResourceHandler {
                     return nil, NewResponseError(http.StatusBadRequest,
                         err.Error())
                 }
-                context.BindInstance(instance)
+                context.Set("decoder.instance", instance)
             } else {
                 return nil, NewResponseError(http.StatusBadRequest,
                     "Empty request body")
@@ -62,15 +62,5 @@ func JSONSerializeMiddleware(resh ResourceHandler) ResourceHandler {
         }
         context.resp.Header().Set("Content-Type", "application/json")
         return string(marshalled), err
-    }
-}
-
-func SessionMiddleware(resh ResourceHandler) ResourceHandler {
-    return func (context *RequestContext) (interface{}, *ResponseError) {
-        session := context.Session()
-        session.Begin()
-        resp, err := resh(context)
-        session.Commit()
-        return resp, err
     }
 }

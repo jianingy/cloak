@@ -17,24 +17,21 @@ import (
 type ResourceManager struct {
     router *mux.Router
     middlewares []Middleware
-    extensions []Extension
+    options map[string]interface{}
 }
 
-func NewResourceManager(mdws []Middleware, exts []Extension) *ResourceManager {
+func NewResourceManager(mdws []Middleware) *ResourceManager {
     mgr := &ResourceManager{router:mux.NewRouter()}
     if mdws == nil {
         mgr.middlewares = []Middleware{
             JSONDeserializeMiddleware,
-            SessionMiddleware,
+            //HoodSessionMiddleware,
+            GormSessionMiddleware,
             FaultWrapperMiddleware,
             JSONSerializeMiddleware,
         }
     }
-    if exts == nil {
-        mgr.extensions = []Extension{
-            &HoodExtension{},
-        }
-    }
+    mgr.options = make(map[string]interface{})
     return mgr
 }
 
@@ -44,12 +41,8 @@ func (mgr *ResourceManager) AddResource(model interface{}) {
         panic("argument model has to be a pointer pointing to a struct")
     }
 
-    for _, extension := range mgr.extensions {
-        extension.OnAddResource(model)
-    }
-
     r := mgr.router
-    resourceT := model.(ResourceInterface)
+    resourceT := model.(ResourceAction)
     plural := strings.ToLower(getTypeName(model)) + "s"
 
     handle := func (p string, m string, h ResourceHandler) {
@@ -68,9 +61,21 @@ func (mgr *ResourceManager) AddResource(model interface{}) {
     log.Printf("Resource `%s' been added to router\n", plural)
 }
 
-func (mgr *ResourceManager) Bind(opts map[string]interface{}) {
-    for _, extension := range mgr.extensions {
-        extension.OnBind(opts)
+func (mgr *ResourceManager) SetOption(opts map[string]interface{}) {
+    for key, val := range opts {
+        mgr.options[key] = val
+    }
+}
+
+func (mgr *ResourceManager) Option(name string, args ...interface{}) interface{} {
+    val, found := mgr.options[name]
+    if found {
+        return val
+    } else {
+        if len(args) > 0 {
+            return args[0]
+        }
+        panic(fmt.Sprintf("value %s not found", name))
     }
 }
 
