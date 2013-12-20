@@ -4,7 +4,7 @@
  * author     : Jianing Yang <jianingy.yang@gmail.com>
  */
 
-package cloak
+package restle
 
 import (
     "fmt"
