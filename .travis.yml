@@ -9,5 +9,6 @@ install:
   - go get github.com/gorilla/mux
   - go get github.com/lib/pq
   - go get github.com/eaigner/hood
+  - go get github.com/jinzhu/gorm
 notifications:
   email: false

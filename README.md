@@ -1,2 +1,2 @@
-[![Build Status](https://secure.travis-ci.org/jianingy/cloak.png?branch=master)](http://travis-ci.org/jianingy/cloak)
+[![Build Status](https://secure.travis-ci.org/jianingy/restle.png?branch=master)](http://travis-ci.org/jianingy/restle)
 W.I.P ...
